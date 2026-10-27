@@ -1,1 +1,5 @@
+# Segundos para escrever o motivo no chat
+prompt-seconds: 15
+
+# Valores por omissão no código (ReportsConfig)
 messages: {}

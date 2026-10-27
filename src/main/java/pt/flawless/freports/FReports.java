@@ -21,6 +21,12 @@ public class FReports extends JavaPlugin {
             DatabaseService database = Databases.get();
             database.migrate(this, List.of("db/freports/V001__create_reports.sql"));
             service = new ReportsService(new SqlReportsRepository(database));
+            ReportsConfig config = ReportsConfig.from(getConfig());
+            ReportFlow.install(this, config);
+            ReportCommand report = new ReportCommand(config);
+            getCommand("report").setExecutor(report);
+            getCommand("report").setTabCompleter(report);
+            getCommand("bugreport").setExecutor(new BugReportCommand(this, config));
         } catch (SQLException | RuntimeException e) {
             // inclui DatabaseUnavailableException
             consoleLogger.sendMessage("não foi possível iniciar os reports: " + e.getMessage(), EMessageTypeEnum.ERROR);
