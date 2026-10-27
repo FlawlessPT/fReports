@@ -191,6 +191,7 @@ public final class StaffMenus implements Listener {
             h.report = r;
             Inventory inv = create(h, FInventorySize.SIZE_54, config.msg("detail-title").replace("{id}", String.valueOf(id)));
             frameOnly(inv);
+            inv.setItem(BACK_SLOT, ReportMenus.item(Material.ARROW, config.msg("menu-back")));
             List<String> lore = new ArrayList<>();
             reportLore(lore, r, (Integer) o[2]);
             inv.setItem(D_INFO, ReportMenus.head(r.targetUuid(), config.msg("staff-report-name")
@@ -355,8 +356,10 @@ public final class StaffMenus implements Listener {
     private void bugClick(Player p, Holder h, int slot, ClickType click) {
         int i = indexOf(slot);
         if (i < 0 || i >= h.bugs.size()) return;
+        if (!click.isLeftClick() && !click.isRightClick()) return;
         BugStatus status = click.isRightClick() ? BugStatus.RESOLVED : BugStatus.SEEN;
         BugReport b = h.bugs.get(i);
+        if (status == BugStatus.SEEN && b.status() != BugStatus.OPEN) return;
         service.handleBug(b.id(), status, p.getUniqueId(), Texts.truncate(p.getName(), 16)).whenComplete((v, e) -> runSync(() -> {
             if (!fail(p, e)) return;
             p.sendMessage(config.msg("bug-marked"));
@@ -396,6 +399,10 @@ public final class StaffMenus implements Listener {
         if (!(e.getInventory().getHolder() instanceof Holder h)) return;
         e.setCancelled(true);
         if (e.getRawSlot() >= e.getInventory().getSize() || !(e.getWhoClicked() instanceof Player p)) return;
+        if (!p.hasPermission("freports.staff")) {
+            p.closeInventory();
+            return;
+        }
         int slot = e.getRawSlot();
         switch (h.kind) {
             case DETAIL -> detailClick(p, h, slot);

@@ -12,7 +12,6 @@ public record ReportsConfig(int promptSeconds, Map<String, String> messages) {
     private static final Map<String, String> DEFAULT_MESSAGES = Map.ofEntries(
             Map.entry("players-only", "&cApenas jogadores."),
             Map.entry("error", "&cOcorreu um erro. Tenta mais tarde."),
-            Map.entry("coming-soon", "&eEm breve."),
             Map.entry("usage-report", "&eUso: /report <jogador>"),
             Map.entry("usage-historico", "&eUso: /report historico <jogador>"),
             Map.entry("usage-bugreport", "&eUso: /bugreport <descrição>"),
