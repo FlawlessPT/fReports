@@ -163,6 +163,7 @@ public class ReportFlow implements Listener {
         plugin.service().createReport(uuid, truncate(p.getName(), 16), pending.targetUuid(),
                 truncate(pending.targetName(), 16), pending.category(), reason)
                 .whenComplete((id, ex) -> Bukkit.getScheduler().runTask(plugin, () -> {
+                    if (ex == null) ReportAlerts.newReport(id, truncate(p.getName(), 16), truncate(pending.targetName(), 16));
                     Player online = Bukkit.getPlayer(uuid);
                     if (online == null) return;
                     if (ex != null) {

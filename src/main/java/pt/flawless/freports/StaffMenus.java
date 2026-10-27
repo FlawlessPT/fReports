@@ -103,6 +103,11 @@ public final class StaffMenus implements Listener {
         instance.openList(p, new Ctx(ReportStatus.OPEN, null, 0));
     }
 
+    /** Detalhe de um report (voltar leva à fila). Thread principal. */
+    static void openReport(Player p, long id) {
+        instance.openDetail(p, id, new Ctx(ReportStatus.OPEN, null, 0));
+    }
+
     /** Lista de bug reports. Thread principal. */
     public static void openBugs(Player p) {
         instance.openBugList(p, BugStatus.OPEN, 0);
@@ -217,6 +222,7 @@ public final class StaffMenus implements Listener {
     private void detailClick(Player p, Holder h, int slot) {
         long id = h.reportId;
         Ctx back = h.ctx;
+        Report rep = h.report;
         if (slot == BACK_SLOT) {
             openList(p, back);
         } else if (slot == D_CLAIM) {
@@ -245,7 +251,8 @@ public final class StaffMenus implements Listener {
         } else if (slot == D_REJECT) {
             ItemStack subject = ReportMenus.item(Material.BARRIER, config.msg("detail-reject"));
             confirm(p, config.msg("confirm-reject-title"), subject, id, back,
-                    x -> done(x, service.reject(id, x.getUniqueId(), Texts.truncate(x.getName(), 16)), "report-rejected", id, back));
+                    x -> done(x, service.reject(id, x.getUniqueId(), Texts.truncate(x.getName(), 16))
+                            .thenApply(ok -> notifyAuthor(ok, rep, ReportStatus.REJECTED, null)), "report-rejected", id, back));
         } else {
             for (int i = 0; i < D_VERDICT_SLOTS.length; i++) {
                 if (D_VERDICT_SLOTS[i] != slot) continue;
@@ -253,11 +260,16 @@ public final class StaffMenus implements Listener {
                 ItemStack subject = ReportMenus.item(VERDICT_ICONS[i], config.msg("detail-verdict")
                         .replace("{veredito}", config.msg("verdict-" + v.name())));
                 confirm(p, config.msg("confirm-resolve-title"), subject, id, back,
-                        x -> done(x, service.resolve(id, v, x.getUniqueId(), Texts.truncate(x.getName(), 16)),
-                                "report-resolved", id, back));
+                        x -> done(x, service.resolve(id, v, x.getUniqueId(), Texts.truncate(x.getName(), 16))
+                                .thenApply(ok -> notifyAuthor(ok, rep, ReportStatus.RESOLVED, v)), "report-resolved", id, back));
                 return;
             }
         }
+    }
+
+    private static Boolean notifyAuthor(Boolean ok, Report r, ReportStatus status, Verdict verdict) {
+        if (Boolean.TRUE.equals(ok)) ReportAlerts.finished(r, status, verdict);
+        return ok;
     }
 
     private void confirm(Player p, String title, ItemStack subject, long id, Ctx back, java.util.function.Consumer<Player> yes) {

@@ -18,8 +18,18 @@ public class ReportsCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (sender instanceof Player p) menus.open(p);
-        else sender.sendMessage(config.msg("players-only"));
+        if (sender instanceof Player p) {
+            // interno: alvo do clique no alerta de report novo (staff)
+            if (args.length == 2 && args[0].equalsIgnoreCase("ver") && p.hasPermission("freports.staff")) {
+                try {
+                    StaffMenus.openReport(p, Long.parseLong(args[1]));
+                    return true;
+                } catch (NumberFormatException ignored) {
+                    // cai no menu normal
+                }
+            }
+            menus.open(p);
+        } else sender.sendMessage(config.msg("players-only"));
         return true;
     }
 }

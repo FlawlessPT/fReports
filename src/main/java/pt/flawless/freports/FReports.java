@@ -28,6 +28,7 @@ public class FReports extends JavaPlugin {
             getCommand("report").setExecutor(report);
             getCommand("report").setTabCompleter(report);
             StaffMenus.install(this, service, config);
+            ReportAlerts.install(this, service, config);
             menus = new ReportMenus(this, service, config);
             getServer().getPluginManager().registerEvents(menus, this);
             getCommand("reports").setExecutor(new ReportsCommand(menus, config));
