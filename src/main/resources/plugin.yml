@@ -10,9 +10,8 @@ commands:
     description: Reporta um jogador ou consulta o historico
     usage: /report <jogador> | /report historico <jogador> | /report help
   reports:
-    description: Abre o menu dos reports (staff)
+    description: Abre o menu dos reports
     usage: /reports
-    permission: freports.staff
   bugreport:
     description: Reporta um bug
     usage: /bugreport <descrição>

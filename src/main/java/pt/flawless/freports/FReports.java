@@ -26,6 +26,10 @@ public class FReports extends JavaPlugin {
             ReportCommand report = new ReportCommand(config);
             getCommand("report").setExecutor(report);
             getCommand("report").setTabCompleter(report);
+            StaffMenus.install(config);
+            ReportMenus menus = new ReportMenus(this, service, config);
+            getServer().getPluginManager().registerEvents(menus, this);
+            getCommand("reports").setExecutor(new ReportsCommand(menus, config));
             getCommand("bugreport").setExecutor(new BugReportCommand(this, config));
         } catch (SQLException | RuntimeException e) {
             // inclui DatabaseUnavailableException
