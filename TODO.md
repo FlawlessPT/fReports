@@ -11,3 +11,10 @@
 - Webhook para o Discord.
 - Ligação a um futuro plugin de punições (fPunish): o veredito "punido" passaria a aplicar o castigo.
 - Dashboard externo sobre as tabelas `freports_*` (os dados já ficam todos na BD, em colunas simples).
+
+## Dívida técnica
+
+- `claimed_by` é reescrito ao resolver/rejeitar; acrescentar colunas `closed_by`/`closed_at` se o dashboard precisar de saber quem fechou.
+- Falha em `markNotified` só fica no log (o autor pode ser avisado duas vezes).
+- Botões "Cancelar"/"Voltar" redundantes no `ConfirmMenu` do detalhe e prefixos `§e`/`§f` fixos nos menus de staff (fora de `config.yml`).
+- `/reports ver <id>` é interno (alvo do clique no alerta), não aparece no help.
