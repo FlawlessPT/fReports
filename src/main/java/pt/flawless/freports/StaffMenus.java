@@ -274,7 +274,8 @@ public final class StaffMenus implements Listener {
 
     private void confirm(Player p, String title, ItemStack subject, long id, Ctx back, java.util.function.Consumer<Player> yes) {
         ConfirmMenu.open(p, title, subject,
-                new ConfirmMenu.Button(Material.LIME_CONCRETE, config.msg("confirm-yes"), yes),
+                new ConfirmMenu.Button(Material.LIME_CONCRETE, config.msg("confirm-yes"),
+                        x -> { if (x.hasPermission("freports.staff")) yes.accept(x); }),
                 new ConfirmMenu.Button(Material.RED_CONCRETE, config.msg("confirm-no"), x -> openDetail(x, id, back)),
                 new ConfirmMenu.Button(Material.ARROW, config.msg("menu-back"), x -> openDetail(x, id, back)));
     }
@@ -372,6 +373,7 @@ public final class StaffMenus implements Listener {
         BugStatus status = click.isRightClick() ? BugStatus.RESOLVED : BugStatus.SEEN;
         BugReport b = h.bugs.get(i);
         if (status == BugStatus.SEEN && b.status() != BugStatus.OPEN) return;
+        if (status == BugStatus.RESOLVED && b.status() == BugStatus.RESOLVED) return;
         service.handleBug(b.id(), status, p.getUniqueId(), Texts.truncate(p.getName(), 16)).whenComplete((v, e) -> runSync(() -> {
             if (!fail(p, e)) return;
             p.sendMessage(config.msg("bug-marked"));
@@ -423,7 +425,7 @@ public final class StaffMenus implements Listener {
                     plugin.menus().open(p);
                 } else if (slot == PREV_SLOT && h.page > 0) {
                     openList(p, new Ctx(h.ctx.status(), h.ctx.category(), h.page - 1));
-                } else if (slot == NEXT_SLOT && h.inventory.getItem(NEXT_SLOT) != null) {
+                } else if (slot == NEXT_SLOT && h.inventory.getItem(NEXT_SLOT) != null && h.inventory.getItem(NEXT_SLOT).getType() == org.bukkit.Material.ARROW) {
                     openList(p, new Ctx(h.ctx.status(), h.ctx.category(), h.page + 1));
                 } else if (slot == FILTER_A) {
                     openList(p, new Ctx(next(STATUS_CYCLE, h.ctx.status()), h.ctx.category(), 0));
@@ -437,14 +439,14 @@ public final class StaffMenus implements Listener {
             case BUGS -> {
                 if (slot == BACK_SLOT) plugin.menus().open(p);
                 else if (slot == PREV_SLOT && h.page > 0) openBugList(p, h.bugFilter, h.page - 1);
-                else if (slot == NEXT_SLOT && h.inventory.getItem(NEXT_SLOT) != null) openBugList(p, h.bugFilter, h.page + 1);
+                else if (slot == NEXT_SLOT && h.inventory.getItem(NEXT_SLOT) != null && h.inventory.getItem(NEXT_SLOT).getType() == org.bukkit.Material.ARROW) openBugList(p, h.bugFilter, h.page + 1);
                 else if (slot == FILTER_A) openBugList(p, next(BUG_CYCLE, h.bugFilter), 0);
                 else bugClick(p, h, slot, e.getClick());
             }
             case HISTORY -> {
                 if (slot == BACK_SLOT) p.closeInventory();
                 else if (slot == PREV_SLOT && h.page > 0) openHistoryMenu(p, h.historyOwner.uuid(), h.historyOwner.name(), h.page - 1);
-                else if (slot == NEXT_SLOT && h.inventory.getItem(NEXT_SLOT) != null) {
+                else if (slot == NEXT_SLOT && h.inventory.getItem(NEXT_SLOT) != null && h.inventory.getItem(NEXT_SLOT).getType() == org.bukkit.Material.ARROW) {
                     openHistoryMenu(p, h.historyOwner.uuid(), h.historyOwner.name(), h.page + 1);
                 }
             }

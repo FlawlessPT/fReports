@@ -154,7 +154,7 @@ public class ReportMenus implements Listener {
                 boolean picker = h.kind == Kind.PICKER;
                 if (slot == BACK_SLOT) open(p);
                 else if (slot == PREV_SLOT && h.page > 0) page(p, picker, h.page - 1);
-                else if (slot == NEXT_SLOT && h.inventory.getItem(NEXT_SLOT) != null) page(p, picker, h.page + 1);
+                else if (slot == NEXT_SLOT && h.inventory.getItem(NEXT_SLOT) != null && h.inventory.getItem(NEXT_SLOT).getType() == org.bukkit.Material.ARROW) page(p, picker, h.page + 1);
                 else if (picker) {
                     int i = indexOf(slot);
                     if (i >= 0 && i < h.players.size()) {
