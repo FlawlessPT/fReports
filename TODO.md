@@ -18,3 +18,7 @@
 - Falha em `markNotified` só fica no log (o autor pode ser avisado duas vezes).
 - Botões "Cancelar"/"Voltar" redundantes no `ConfirmMenu` do detalhe e prefixos `§e`/`§f` fixos nos menus de staff (fora de `config.yml`).
 - `/reports ver <id>` é interno (alvo do clique no alerta), não aparece no help.
+- A fila de staff abre filtrada em `OPEN`: um report assumido (`IN_REVIEW`) sai da vista por omissão.
+- Aviso ao autor ligado mas ainda sem `/login` no fAuth: recebe a mensagem no ecrã de login e fica marcado como avisado.
+- Aviso duplicado ao autor se o report for fechado enquanto a consulta de não avisados está a correr (`markNotified` devia só avisar se alterou uma linha).
+- `/bugreport help` regista um bug com o texto "help".
