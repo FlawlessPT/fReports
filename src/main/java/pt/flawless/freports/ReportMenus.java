@@ -124,8 +124,8 @@ public class ReportMenus implements Listener {
     private ItemStack reportItem(Report r) {
         List<String> lore = new ArrayList<>();
         lore.add(config.msg("menu-mine-category").replace("{categoria}", config.msg("category-" + r.category().name())));
-        lore.add(config.msg("menu-mine-reason").replace("{motivo}",
-                r.reason() == null ? config.msg("menu-confirm-no-reason") : r.reason()));
+        Texts.addWrapped(lore, config.msg("menu-mine-reason"), "{motivo}",
+                r.reason() == null ? config.msg("menu-confirm-no-reason") : r.reason());
         lore.add(config.msg("menu-mine-status").replace("{estado}", config.msg("status-" + r.status().name())));
         if (r.verdict() != null) {
             lore.add(config.msg("menu-mine-verdict").replace("{veredito}", config.msg("verdict-" + r.verdict().name())));
@@ -216,12 +216,12 @@ public class ReportMenus implements Listener {
         return holder.inventory;
     }
 
-    private static ItemStack item(Material material, String name) {
+    static ItemStack item(Material material, String name) {
         return new FItemStack(material, 1, name).createItem();
     }
 
     /** Cabeça do jogador; o dono vem do UUID (sem lookup por nome). */
-    private static ItemStack head(UUID uuid, String name, List<String> lore) {
+    static ItemStack head(UUID uuid, String name, List<String> lore) {
         ItemStack head = new FItemStack(Material.PLAYER_HEAD, 1, name).setLore(lore).createItem();
         SkullMeta meta = (SkullMeta) head.getItemMeta();
         meta.setOwningPlayer(Bukkit.getOfflinePlayer(uuid));

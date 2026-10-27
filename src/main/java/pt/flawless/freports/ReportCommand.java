@@ -45,26 +45,24 @@ public class ReportCommand implements CommandExecutor, TabCompleter {
         }
         String first = args[0].toLowerCase(Locale.ROOT);
         if (first.equals("historico") || first.equals("history")) {
-            if (!p.hasPermission(STAFF)) Messages.noPermission(p);
-            else p.sendMessage(config.msg("coming-soon"));
+            if (!p.hasPermission(STAFF)) {
+                Messages.noPermission(p);
+            } else if (args.length < 2) {
+                p.sendMessage(config.msg("usage-historico"));
+            } else {
+                Object[] t = resolve(args[1]);
+                if (t == null) p.sendMessage(config.msg("player-not-found"));
+                else StaffMenus.openHistory(p, (UUID) t[0], (String) t[1]);
+            }
             return true;
         }
-        UUID uuid;
-        String name;
-        Player online = Bukkit.getPlayerExact(args[0]);
-        if (online != null) {
-            uuid = online.getUniqueId();
-            name = online.getName();
-        } else {
-            // só jogadores já conhecidos do servidor; getOfflinePlayerIfCached não bloqueia
-            OfflinePlayer off = Bukkit.getOfflinePlayerIfCached(args[0]);
-            if (off == null || !off.hasPlayedBefore() || off.getName() == null) {
-                p.sendMessage(config.msg("player-not-found"));
-                return true;
-            }
-            uuid = off.getUniqueId();
-            name = off.getName();
+        Object[] target = resolve(args[0]);
+        if (target == null) {
+            p.sendMessage(config.msg("player-not-found"));
+            return true;
         }
+        UUID uuid = (UUID) target[0];
+        String name = (String) target[1];
         if (uuid.equals(p.getUniqueId())) {
             p.sendMessage(config.msg("report-self"));
             return true;
@@ -73,8 +71,23 @@ public class ReportCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    /** {uuid, nome} de um jogador online ou já conhecido; null se não existir. */
+    private static Object[] resolve(String input) {
+        Player online = Bukkit.getPlayerExact(input);
+        if (online != null) return new Object[]{online.getUniqueId(), online.getName()};
+        // getOfflinePlayerIfCached não bloqueia
+        OfflinePlayer off = Bukkit.getOfflinePlayerIfCached(input);
+        if (off == null || !off.hasPlayedBefore() || off.getName() == null) return null;
+        return new Object[]{off.getUniqueId(), off.getName()};
+    }
+
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (args.length == 2 && sender.hasPermission(STAFF) && args[0].equalsIgnoreCase("historico")) {
+            String p2 = args[1].toLowerCase(Locale.ROOT);
+            return Bukkit.getOnlinePlayers().stream().map(Player::getName)
+                    .filter(n -> n.toLowerCase(Locale.ROOT).startsWith(p2)).toList();
+        }
         if (args.length != 1) return List.of();
         String prefix = args[0].toLowerCase(Locale.ROOT);
         List<String> out = new ArrayList<>(List.of("help"));

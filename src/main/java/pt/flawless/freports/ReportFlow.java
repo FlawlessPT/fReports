@@ -9,6 +9,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import pt.flawless.fapi.enums.FInventorySize;
@@ -145,10 +146,12 @@ public class ReportFlow implements Listener {
 
     private void confirm(Player p, Pending pending, String reason) {
         String category = config.msg("category-" + pending.category().name());
+        List<String> lore = new java.util.ArrayList<>();
+        lore.add(config.msg("menu-confirm-category").replace("{categoria}", category));
+        Texts.addWrapped(lore, config.msg("menu-confirm-reason"), "{motivo}",
+                reason == null ? config.msg("menu-confirm-no-reason") : reason);
         FItemStack subject = new FItemStack(Material.PAPER, 1, config.msg("menu-confirm-subject").replace("{jogador}", pending.targetName()))
-                .setLore(List.of(config.msg("menu-confirm-category").replace("{categoria}", category),
-                        config.msg("menu-confirm-reason").replace("{motivo}",
-                                reason == null ? config.msg("menu-confirm-no-reason") : reason)));
+                .setLore(lore);
         ConfirmMenu.open(p, config.msg("menu-confirm-title"), subject.createItem(),
                 new ConfirmMenu.Button(Material.LIME_CONCRETE, config.msg("menu-confirm-yes"), x -> send(x, pending, reason)),
                 new ConfirmMenu.Button(Material.RED_CONCRETE, config.msg("menu-confirm-no"),
@@ -172,6 +175,11 @@ public class ReportFlow implements Listener {
     }
 
     static String truncate(String s, int max) {
-        return s.length() <= max ? s : s.substring(0, max);
+        return Texts.truncate(s, max);
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent e) {
+        prompts.remove(e.getPlayer().getUniqueId());
     }
 }

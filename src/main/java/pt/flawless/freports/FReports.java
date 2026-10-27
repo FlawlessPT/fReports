@@ -13,6 +13,7 @@ public class FReports extends JavaPlugin {
     private final FConsoleLogger consoleLogger = new FConsoleLogger(this.getName());
     private boolean enabledOk = false;
     private ReportsService service;
+    private ReportMenus menus;
 
     @Override
     public void onEnable() {
@@ -26,8 +27,8 @@ public class FReports extends JavaPlugin {
             ReportCommand report = new ReportCommand(config);
             getCommand("report").setExecutor(report);
             getCommand("report").setTabCompleter(report);
-            StaffMenus.install(config);
-            ReportMenus menus = new ReportMenus(this, service, config);
+            StaffMenus.install(this, service, config);
+            menus = new ReportMenus(this, service, config);
             getServer().getPluginManager().registerEvents(menus, this);
             getCommand("reports").setExecutor(new ReportsCommand(menus, config));
             getCommand("bugreport").setExecutor(new BugReportCommand(this, config));
@@ -39,6 +40,10 @@ public class FReports extends JavaPlugin {
         }
         enabledOk = true;
         consoleLogger.sendEnablePluginMessage();
+    }
+
+    public ReportMenus menus() {
+        return menus;
     }
 
     public ReportsService service() {
