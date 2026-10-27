@@ -1,0 +1,22 @@
+name: fReports
+main: pt.flawless.freports.FReports
+version: '1.0'
+api-version: '1.21'
+description: Reports de jogadores e bugs
+depend: [fAPI, fDatabase]
+softdepend: [fPermissions]
+commands:
+  report:
+    description: Reporta um jogador ou consulta o historico
+    usage: /report <jogador> | /report historico <jogador> | /report help
+  reports:
+    description: Abre o menu dos reports (staff)
+    usage: /reports
+    permission: freports.staff
+  bugreport:
+    description: Reporta um bug
+    usage: /bugreport <descrição>
+permissions:
+  freports.staff:
+    description: Gerir reports
+    default: false
