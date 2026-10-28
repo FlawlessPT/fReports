@@ -1,5 +1,10 @@
-package pt.flawless.freports;
+package pt.flawless.freports.menu;
 
+import pt.flawless.freports.config.ReportsConfig;
+import pt.flawless.freports.data.ReportsService;
+import pt.flawless.freports.listener.ReportFlow;
+import pt.flawless.freports.model.Report;
+import pt.flawless.freports.util.Texts;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -73,12 +78,12 @@ public class ReportMenus implements Listener {
         Holder h = new Holder(staff ? Kind.HUB : Kind.MEMBER, 0, List.of());
         Inventory inv = create(h, FInventorySize.SIZE_27, config.msg(staff ? "menu-hub-title" : "menu-member-title"));
         if (staff) {
-            inv.setItem(LEFT, item(Material.WRITABLE_BOOK, config.msg("menu-analyze")));
-            inv.setItem(MIDDLE, item(Material.BEETROOT_SEEDS, config.msg("menu-bugs")));
-            inv.setItem(RIGHT, item(Material.BOOK, config.msg("menu-mine")));
+            inv.setItem(LEFT, item(Material.WRITABLE_BOOK, config.msg("menu-analyze"), config.msg("menu-analyze-lore")));
+            inv.setItem(MIDDLE, item(Material.BEETROOT_SEEDS, config.msg("menu-bugs"), config.msg("menu-bugs-lore")));
+            inv.setItem(RIGHT, item(Material.BOOK, config.msg("menu-mine"), config.msg("menu-mine-lore")));
         } else {
-            inv.setItem(LEFT, item(Material.PLAYER_HEAD, config.msg("menu-report-player")));
-            inv.setItem(RIGHT, item(Material.BOOK, config.msg("menu-mine")));
+            inv.setItem(LEFT, item(Material.PLAYER_HEAD, config.msg("menu-report-player"), config.msg("menu-report-player-lore")));
+            inv.setItem(RIGHT, item(Material.BOOK, config.msg("menu-mine"), config.msg("menu-mine-lore")));
             inv.setItem(INFO, new FItemStack(Material.OAK_SIGN, 1, config.msg("menu-info"))
                     .setLore(List.of(config.msg("menu-info-1"), config.msg("menu-info-2"))).createItem());
         }
@@ -218,6 +223,10 @@ public class ReportMenus implements Listener {
 
     static ItemStack item(Material material, String name) {
         return new FItemStack(material, 1, name).createItem();
+    }
+
+    static ItemStack item(Material material, String name, String lore) {
+        return new FItemStack(material, 1, name).setLore(List.of(lore)).createItem();
     }
 
     /** Cabeça do jogador; o dono vem do UUID (sem lookup por nome). */

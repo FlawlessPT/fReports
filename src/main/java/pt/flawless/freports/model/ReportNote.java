@@ -1,4 +1,4 @@
-package pt.flawless.freports;
+package pt.flawless.freports.model;
 
 import java.util.UUID;
 

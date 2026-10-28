@@ -1,5 +1,8 @@
-package pt.flawless.freports;
+package pt.flawless.freports.command;
 
+import pt.flawless.freports.config.ReportsConfig;
+import pt.flawless.freports.listener.ReportFlow;
+import pt.flawless.freports.menu.StaffMenus;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;

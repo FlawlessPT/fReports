@@ -1,5 +1,8 @@
-package pt.flawless.freports;
+package pt.flawless.freports.command;
 
+import pt.flawless.freports.config.ReportsConfig;
+import pt.flawless.freports.FReports;
+import pt.flawless.freports.util.Texts;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -32,7 +35,7 @@ public class BugReportCommand implements CommandExecutor {
             return true;
         }
         UUID uuid = p.getUniqueId();
-        plugin.service().createBug(uuid, ReportFlow.truncate(p.getName(), 16), ReportFlow.truncate(text, 512))
+        plugin.service().createBug(uuid, Texts.truncate(p.getName(), 16), Texts.truncate(text, 512))
                 .whenComplete((id, ex) -> Bukkit.getScheduler().runTask(plugin, () -> {
                     Player online = Bukkit.getPlayer(uuid);
                     if (online == null) return;

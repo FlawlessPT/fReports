@@ -1,5 +1,9 @@
-package pt.flawless.freports;
+package pt.flawless.freports.listener;
 
+import pt.flawless.freports.config.ReportsConfig;
+import pt.flawless.freports.FReports;
+import pt.flawless.freports.model.Category;
+import pt.flawless.freports.util.Texts;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -109,7 +113,7 @@ public class ReportFlow implements Listener {
         long expires = System.currentTimeMillis() + config.promptSeconds() * 1000L;
         Pending pending = new Pending(targetUuid, targetName, category, expires);
         prompts.put(uuid, pending);
-        p.sendMessage(config.msg("prompt-start").replace("{n}", String.valueOf(config.promptSeconds())));
+        p.sendMessage(config.msg(category == Category.OTHER ? "prompt-start-required" : "prompt-start").replace("{n}", String.valueOf(config.promptSeconds())));
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             // só expira este prompt, não um mais recente
             if (!prompts.remove(uuid, pending)) return;
@@ -140,7 +144,12 @@ public class ReportFlow implements Listener {
             p.sendMessage(config.msg("prompt-cancelled"));
             return;
         }
-        String reason = text.equalsIgnoreCase("saltar") || text.isEmpty() ? null : truncate(text, 256);
+        String reason = text.equalsIgnoreCase("saltar") || text.isEmpty() ? null : Texts.truncate(text, 256);
+        if (reason == null && pending.category() == Category.OTHER) {
+            p.sendMessage(config.msg("prompt-required"));
+            startPrompt(p, pending.targetUuid(), pending.targetName(), pending.category());
+            return;
+        }
         confirm(p, pending, reason);
     }
 
@@ -160,10 +169,10 @@ public class ReportFlow implements Listener {
 
     private void send(Player p, Pending pending, String reason) {
         UUID uuid = p.getUniqueId();
-        plugin.service().createReport(uuid, truncate(p.getName(), 16), pending.targetUuid(),
-                truncate(pending.targetName(), 16), pending.category(), reason)
+        plugin.service().createReport(uuid, Texts.truncate(p.getName(), 16), pending.targetUuid(),
+                Texts.truncate(pending.targetName(), 16), pending.category(), reason)
                 .whenComplete((id, ex) -> Bukkit.getScheduler().runTask(plugin, () -> {
-                    if (ex == null) ReportAlerts.newReport(id, truncate(p.getName(), 16), truncate(pending.targetName(), 16));
+                    if (ex == null) ReportAlerts.newReport(id, Texts.truncate(p.getName(), 16), Texts.truncate(pending.targetName(), 16));
                     Player online = Bukkit.getPlayer(uuid);
                     if (online == null) return;
                     if (ex != null) {
@@ -173,10 +182,6 @@ public class ReportFlow implements Listener {
                         online.sendMessage(config.msg("report-sent"));
                     }
                 }));
-    }
-
-    static String truncate(String s, int max) {
-        return Texts.truncate(s, max);
     }
 
     @EventHandler

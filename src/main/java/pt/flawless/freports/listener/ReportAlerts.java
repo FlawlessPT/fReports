@@ -1,5 +1,11 @@
-package pt.flawless.freports;
+package pt.flawless.freports.listener;
 
+import pt.flawless.freports.config.ReportsConfig;
+import pt.flawless.freports.data.ReportsService;
+import pt.flawless.freports.FReports;
+import pt.flawless.freports.model.Report;
+import pt.flawless.freports.model.ReportStatus;
+import pt.flawless.freports.model.Verdict;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -27,7 +33,7 @@ public final class ReportAlerts implements Listener {
         this.config = config;
     }
 
-    static void install(FReports plugin, ReportsService service, ReportsConfig config) {
+    public static void install(FReports plugin, ReportsService service, ReportsConfig config) {
         instance = new ReportAlerts(plugin, service, config);
         Bukkit.getPluginManager().registerEvents(instance, plugin);
     }
@@ -44,7 +50,7 @@ public final class ReportAlerts implements Listener {
     }
 
     /** Report tratado: avisa o autor se estiver online e marca como notificado. Qualquer thread. */
-    static void finished(Report r, ReportStatus status, Verdict verdict) {
+    public static void finished(Report r, ReportStatus status, Verdict verdict) {
         instance.runSync(() -> {
             Player p = Bukkit.getPlayer(r.reporterUuid());
             if (p == null) return;

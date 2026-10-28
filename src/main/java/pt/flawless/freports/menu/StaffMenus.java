@@ -1,5 +1,18 @@
-package pt.flawless.freports;
+package pt.flawless.freports.menu;
 
+import pt.flawless.freports.config.ReportsConfig;
+import pt.flawless.freports.data.ReportsService;
+import pt.flawless.freports.FReports;
+import pt.flawless.freports.listener.ReportAlerts;
+import pt.flawless.freports.model.BugReport;
+import pt.flawless.freports.model.BugStatus;
+import pt.flawless.freports.model.Category;
+import pt.flawless.freports.model.HistoryEntry;
+import pt.flawless.freports.model.Report;
+import pt.flawless.freports.model.ReportNote;
+import pt.flawless.freports.model.ReportStatus;
+import pt.flawless.freports.model.Verdict;
+import pt.flawless.freports.util.Texts;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -14,6 +27,8 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
+import pt.flawless.fapi.vanish.VanishApi;
+import pt.flawless.fapi.vanish.Vanishes;
 import pt.flawless.fapi.enums.FInventorySize;
 import pt.flawless.fapi.inventory.ConfirmMenu;
 import pt.flawless.fapi.inventory.FInventory;
@@ -38,8 +53,9 @@ public final class StaffMenus implements Listener {
     private static final int PREV_SLOT = 48, BACK_SLOT = 49, NEXT_SLOT = 50;
     private static final int FILTER_A = 46, FILTER_B = 52;
     // detalhe
-    private static final int D_INFO = 13, D_CLAIM = 20, D_TP = 22, D_NOTES = 24, D_REJECT = 40;
-    private static final int[] D_VERDICT_SLOTS = {29, 31, 33};
+    private static final int D_INFO = 13, D_CLAIM = 20, D_TP = 22, D_NOTES = 24, D_RESOLVE = 30, D_REJECT = 32;
+    private static final int[] V_SLOTS = {11, 13, 15};
+    private static final int V_BACK = 22;
     private static final Verdict[] VERDICTS = Verdict.values();
     private static final Material[] VERDICT_ICONS = {Material.EMERALD, Material.GRAY_DYE, Material.RED_DYE};
     private static final List<ReportStatus> STATUS_CYCLE = cycle(ReportStatus.values());
@@ -48,7 +64,7 @@ public final class StaffMenus implements Listener {
 
     private static StaffMenus instance;
 
-    private enum Kind { LIST, DETAIL, BUGS, HISTORY }
+    private enum Kind { LIST, DETAIL, VERDICT, BUGS, HISTORY }
 
     /** Estado da lista de reports, para voltar a ela a partir do detalhe. */
     private record Ctx(ReportStatus status, Category category, int page) {
@@ -93,7 +109,7 @@ public final class StaffMenus implements Listener {
         this.config = config;
     }
 
-    static void install(FReports plugin, ReportsService service, ReportsConfig config) {
+    public static void install(FReports plugin, ReportsService service, ReportsConfig config) {
         instance = new StaffMenus(plugin, service, config);
         Bukkit.getPluginManager().registerEvents(instance, plugin);
     }
@@ -104,7 +120,7 @@ public final class StaffMenus implements Listener {
     }
 
     /** Detalhe de um report (voltar leva à fila). Thread principal. */
-    static void openReport(Player p, long id) {
+    public static void openReport(Player p, long id) {
         instance.openDetail(p, id, new Ctx(ReportStatus.OPEN, null, 0));
     }
 
@@ -201,8 +217,14 @@ public final class StaffMenus implements Listener {
             reportLore(lore, r, (Integer) o[2]);
             inv.setItem(D_INFO, ReportMenus.head(r.targetUuid(), config.msg("staff-report-name")
                     .replace("{id}", String.valueOf(id)).replace("{jogador}", r.targetName()), lore));
-            inv.setItem(D_CLAIM, ReportMenus.item(Material.NAME_TAG, config.msg("detail-claim")));
-            inv.setItem(D_TP, ReportMenus.item(Material.ENDER_PEARL, config.msg("detail-teleport")));
+            if (r.status() == ReportStatus.OPEN) {
+                inv.setItem(D_CLAIM, ReportMenus.item(Material.NAME_TAG, config.msg("detail-claim"), config.msg("detail-claim-lore")));
+            } else {
+                String who = r.claimedByName() == null ? "?" : r.claimedByName();
+                inv.setItem(D_CLAIM, ReportMenus.item(Material.NAME_TAG, config.msg("detail-claimed").replace("{jogador}", who),
+                        config.msg("detail-claimed-lore")));
+            }
+            inv.setItem(D_TP, ReportMenus.item(Material.ENDER_PEARL, config.msg("detail-teleport"), config.msg("detail-teleport-lore")));
             List<String> nl = new ArrayList<>();
             if (ns.isEmpty()) nl.add(config.msg("detail-notes-none"));
             for (ReportNote n : ns) {
@@ -210,11 +232,8 @@ public final class StaffMenus implements Listener {
             }
             nl.add(config.msg("detail-notes-add"));
             inv.setItem(D_NOTES, new FItemStack(Material.WRITABLE_BOOK, 1, config.msg("detail-notes")).setLore(nl).createItem());
-            for (int i = 0; i < VERDICTS.length; i++) {
-                inv.setItem(D_VERDICT_SLOTS[i], ReportMenus.item(VERDICT_ICONS[i], config.msg("detail-verdict")
-                        .replace("{veredito}", config.msg("verdict-" + VERDICTS[i].name()))));
-            }
-            inv.setItem(D_REJECT, ReportMenus.item(Material.BARRIER, config.msg("detail-reject")));
+            inv.setItem(D_RESOLVE, ReportMenus.item(Material.EMERALD, config.msg("detail-resolve"), config.msg("detail-resolve-lore")));
+            inv.setItem(D_REJECT, ReportMenus.item(Material.BARRIER, config.msg("detail-reject"), config.msg("detail-reject-lore")));
             p.openInventory(inv);
         }));
     }
@@ -225,7 +244,7 @@ public final class StaffMenus implements Listener {
         Report rep = h.report;
         if (slot == BACK_SLOT) {
             openList(p, back);
-        } else if (slot == D_CLAIM) {
+        } else if (slot == D_CLAIM && rep.status() == ReportStatus.OPEN) {
             done(p, service.claim(id, p.getUniqueId(), Texts.truncate(p.getName(), 16)), "report-claimed", id, back);
         } else if (slot == D_TP) {
             Player target = Bukkit.getPlayer(h.report.targetUuid());
@@ -233,7 +252,11 @@ public final class StaffMenus implements Listener {
                 p.sendMessage(config.msg("detail-teleport-offline"));
             } else {
                 p.closeInventory();
+                VanishApi vanish = Vanishes.get();
+                boolean hid = vanish != null && !vanish.isVanished(p.getUniqueId());
+                if (hid) vanish.setVanished(p, true);
                 p.teleport(target.getLocation());
+                if (hid) p.sendMessage(config.msg("detail-vanished"));
                 p.sendMessage(config.msg("detail-teleported").replace("{jogador}", target.getName()));
             }
         } else if (slot == D_NOTES) {
@@ -253,17 +276,44 @@ public final class StaffMenus implements Listener {
             confirm(p, config.msg("confirm-reject-title"), subject, id, back,
                     x -> done(x, service.reject(id, x.getUniqueId(), Texts.truncate(x.getName(), 16))
                             .thenApply(ok -> notifyAuthor(ok, rep, ReportStatus.REJECTED, null)), "report-rejected", id, back));
-        } else {
-            for (int i = 0; i < D_VERDICT_SLOTS.length; i++) {
-                if (D_VERDICT_SLOTS[i] != slot) continue;
-                Verdict v = VERDICTS[i];
-                ItemStack subject = ReportMenus.item(VERDICT_ICONS[i], config.msg("detail-verdict")
-                        .replace("{veredito}", config.msg("verdict-" + v.name())));
-                confirm(p, config.msg("confirm-resolve-title"), subject, id, back,
-                        x -> done(x, service.resolve(id, v, x.getUniqueId(), Texts.truncate(x.getName(), 16))
-                                .thenApply(ok -> notifyAuthor(ok, rep, ReportStatus.RESOLVED, v)), "report-resolved", id, back));
-                return;
-            }
+        } else if (slot == D_RESOLVE) {
+            openVerdicts(p, h);
+        }
+    }
+
+    /** Escolha do tipo de resolução; cada opção abre a confirmação. */
+    private void openVerdicts(Player p, Holder detail) {
+        Holder h = new Holder(Kind.VERDICT, detail.ctx, 0, null);
+        h.reportId = detail.reportId;
+        h.report = detail.report;
+        Inventory inv = create(h, FInventorySize.SIZE_27, config.msg("verdict-title").replace("{id}", String.valueOf(h.reportId)));
+        for (int i = 0; i < VERDICTS.length; i++) {
+            inv.setItem(V_SLOTS[i], verdictItem(i));
+        }
+        inv.setItem(V_BACK, ReportMenus.item(Material.ARROW, config.msg("menu-back")));
+        p.openInventory(inv);
+    }
+
+    private ItemStack verdictItem(int i) {
+        return ReportMenus.item(VERDICT_ICONS[i], config.msg("detail-verdict")
+                .replace("{veredito}", config.msg("verdict-" + VERDICTS[i].name())), config.msg("detail-verdict-lore"));
+    }
+
+    private void verdictClick(Player p, Holder h, int slot) {
+        long id = h.reportId;
+        Ctx back = h.ctx;
+        Report rep = h.report;
+        if (slot == V_BACK) {
+            openDetail(p, id, back);
+            return;
+        }
+        for (int i = 0; i < V_SLOTS.length; i++) {
+            if (V_SLOTS[i] != slot) continue;
+            Verdict v = VERDICTS[i];
+            confirm(p, config.msg("confirm-resolve-title"), verdictItem(i), id, back,
+                    x -> done(x, service.resolve(id, v, x.getUniqueId(), Texts.truncate(x.getName(), 16))
+                            .thenApply(ok -> notifyAuthor(ok, rep, ReportStatus.RESOLVED, v)), "report-resolved", id, back));
+            return;
         }
     }
 
@@ -292,7 +342,9 @@ public final class StaffMenus implements Listener {
                 return;
             }
             online.sendMessage(config.msg(Boolean.TRUE.equals(ok) ? okKey : "report-already-handled"));
-            openDetail(online, id, back);
+            // resolvido/rejeitado: fecha; assumir (ou já tratado) volta a abrir o detalhe
+            if (Boolean.TRUE.equals(ok) && !okKey.equals("report-claimed")) online.closeInventory();
+            else openDetail(online, id, back);
         }));
     }
 
@@ -420,6 +472,7 @@ public final class StaffMenus implements Listener {
         int slot = e.getRawSlot();
         switch (h.kind) {
             case DETAIL -> detailClick(p, h, slot);
+            case VERDICT -> verdictClick(p, h, slot);
             case LIST -> {
                 if (slot == BACK_SLOT) {
                     plugin.menus().open(p);

@@ -1,5 +1,13 @@
-package pt.flawless.freports;
+package pt.flawless.freports.data;
 
+import pt.flawless.freports.model.BugReport;
+import pt.flawless.freports.model.BugStatus;
+import pt.flawless.freports.model.Category;
+import pt.flawless.freports.model.HistoryEntry;
+import pt.flawless.freports.model.Report;
+import pt.flawless.freports.model.ReportNote;
+import pt.flawless.freports.model.ReportStatus;
+import pt.flawless.freports.model.Verdict;
 import pt.flawless.fapi.database.DatabaseService;
 
 import java.sql.PreparedStatement;

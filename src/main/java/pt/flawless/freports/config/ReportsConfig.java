@@ -1,5 +1,6 @@
-package pt.flawless.freports;
+package pt.flawless.freports.config;
 
+import pt.flawless.freports.model.Report;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.ConfigurationSection;
 
@@ -23,9 +24,11 @@ public record ReportsConfig(int promptSeconds, Map<String, String> messages) {
             Map.entry("player-not-found", "&cJogador não encontrado."),
             Map.entry("report-self", "&cNão te podes denunciar a ti próprio."),
             Map.entry("prompt-start", "&eEscreve o motivo no chat ({n}s), &fsaltar &epara não pôr motivo ou &ccancelar &epara sair."),
+            Map.entry("prompt-start-required", "&eEscreve o motivo no chat ({n}s) ou &ccancelar &epara sair. Na categoria Outro o motivo é obrigatório."),
+            Map.entry("prompt-required", "&cNa categoria Outro tens de escrever um motivo."),
             Map.entry("prompt-cancelled", "&7Report cancelado."),
             Map.entry("prompt-expired", "&7O tempo para o report acabou."),
-            Map.entry("report-sent", "&aReport enviado."),
+            Map.entry("report-sent", "&aReport enviado. Podes consultar os teus reports em &7/reports"),
             Map.entry("bug-sent", "&aBug reportado, obrigado."),
             Map.entry("menu-category-title", "Denunciar {jogador}"),
             Map.entry("menu-category-lore", "&7Clica para denunciar por esta categoria"),
@@ -48,6 +51,10 @@ public record ReportsConfig(int promptSeconds, Map<String, String> messages) {
             Map.entry("menu-analyze", "&eAnalisar reports"),
             Map.entry("menu-bugs", "&eBug reports"),
             Map.entry("menu-mine", "&eOs meus reports"),
+            Map.entry("menu-analyze-lore", "&7Clica para analisar os reports"),
+            Map.entry("menu-bugs-lore", "&7Clica para ver os bug reports"),
+            Map.entry("menu-mine-lore", "&7Clica para ver os teus reports"),
+            Map.entry("menu-report-player-lore", "&7Clica para escolher um jogador a denunciar"),
             Map.entry("menu-info", "&eComo reportar"),
             Map.entry("menu-info-1", "&7/report <jogador> &8- &7denuncia um jogador"),
             Map.entry("menu-info-2", "&7/bugreport <descrição> &8- &7reporta um bug"),
@@ -75,7 +82,17 @@ public record ReportsConfig(int promptSeconds, Map<String, String> messages) {
             Map.entry("detail-claim", "&eAssumir report"),
             Map.entry("detail-teleport", "&eTeleportar para o alvo"),
             Map.entry("detail-teleport-offline", "&cO alvo está offline."),
+            Map.entry("detail-resolve", "&aResolver"),
+            Map.entry("detail-claimed", "&7Assumido por &f{jogador}"),
+            Map.entry("detail-claimed-lore", "&7Este report já não está por assumir"),
+            Map.entry("detail-claim-lore", "&7Clica para assumir este report"),
+            Map.entry("detail-teleport-lore", "&7Clica para te teleportares (ficas em vanish)"),
+            Map.entry("detail-resolve-lore", "&7Clica para escolher como resolver"),
+            Map.entry("detail-reject-lore", "&7Clica para rejeitar o report"),
+            Map.entry("detail-verdict-lore", "&7Clica para resolver com este veredito"),
+            Map.entry("verdict-title", "Resolver report #{id}"),
             Map.entry("detail-teleported", "&aTeleportado para {jogador}."),
+            Map.entry("detail-vanished", "&7Ficaste em vanish. Usa &e/vanish &7para voltares a ser visível."),
             Map.entry("detail-verdict", "&eResolver: {veredito}"),
             Map.entry("detail-reject", "&cRejeitar report"),
             Map.entry("detail-notes", "&eNotas internas"),

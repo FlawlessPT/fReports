@@ -1,5 +1,15 @@
 package pt.flawless.freports;
 
+import pt.flawless.freports.command.BugReportCommand;
+import pt.flawless.freports.command.ReportCommand;
+import pt.flawless.freports.command.ReportsCommand;
+import pt.flawless.freports.config.ReportsConfig;
+import pt.flawless.freports.data.ReportsService;
+import pt.flawless.freports.data.SqlReportsRepository;
+import pt.flawless.freports.listener.ReportAlerts;
+import pt.flawless.freports.listener.ReportFlow;
+import pt.flawless.freports.menu.ReportMenus;
+import pt.flawless.freports.menu.StaffMenus;
 import org.bukkit.plugin.java.JavaPlugin;
 import pt.flawless.fapi.database.DatabaseService;
 import pt.flawless.fapi.database.Databases;
