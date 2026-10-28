@@ -22,3 +22,5 @@
 - Aviso ao autor ligado mas ainda sem `/login` no fAuth: recebe a mensagem no ecrã de login e fica marcado como avisado.
 - Aviso duplicado ao autor se o report for fechado enquanto a consulta de não avisados está a correr (`markNotified` devia só avisar se alterou uma linha).
 - `/bugreport help` regista um bug com o texto "help".
+
+- Reload de config exige `/freload plugin` (o `ReportsConfig` é partilhado por fluxos, menus, alertas e comandos).
