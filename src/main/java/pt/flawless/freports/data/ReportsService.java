@@ -7,6 +7,7 @@ import pt.flawless.freports.model.HistoryEntry;
 import pt.flawless.freports.model.Report;
 import pt.flawless.freports.model.ReportNote;
 import pt.flawless.freports.model.ReportStatus;
+import pt.flawless.freports.model.StaffRating;
 import pt.flawless.freports.model.Verdict;
 import java.util.Collection;
 import java.util.List;
@@ -101,6 +102,14 @@ public class ReportsService {
 
     public CompletableFuture<List<HistoryEntry>> history(UUID reporterUuid) {
         return repository.history(reporterUuid);
+    }
+
+    public CompletableFuture<List<StaffRating>> listStaffRatings() {
+        return repository.listStaffRatings();
+    }
+
+    public CompletableFuture<Boolean> rateStaff(UUID staffUuid, String staffName, UUID raterUuid, String raterName, int score) {
+        return repository.rateStaff(staffUuid, staffName, raterUuid, raterName, score);
     }
 
     public CompletableFuture<Void> markNotified(long id) {

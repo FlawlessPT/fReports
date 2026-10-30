@@ -7,6 +7,7 @@ import pt.flawless.freports.model.HistoryEntry;
 import pt.flawless.freports.model.Report;
 import pt.flawless.freports.model.ReportNote;
 import pt.flawless.freports.model.ReportStatus;
+import pt.flawless.freports.model.StaffRating;
 import pt.flawless.freports.model.Verdict;
 import pt.flawless.fapi.database.DatabaseService;
 
@@ -36,6 +37,8 @@ public class SqlReportsRepository implements ReportsRepository {
             + "handled_by_uuid, handled_by_name, handled_at";
     private static final String CLOSE = "UPDATE freports_reports SET status = ?, verdict = ?, claimed_by_uuid = ?, "
             + "claimed_by_name = ?, updated_at = ?, resolved_at = ? WHERE id = ? AND status IN ('OPEN', 'IN_REVIEW')";
+
+    private static final long RATE_COOLDOWN_MS = 24L * 60 * 60 * 1000;
 
     private final DatabaseService database;
 
@@ -177,6 +180,24 @@ public class SqlReportsRepository implements ReportsRepository {
     @Override
     public CompletableFuture<Void> markNotified(long id) {
         return update("UPDATE freports_reports SET notified = TRUE WHERE id = ?", id).thenApply(n -> null);
+    }
+
+    @Override
+    public CompletableFuture<List<StaffRating>> listStaffRatings() {
+        return query("SELECT staff_uuid, MAX(staff_name), AVG(score), COUNT(*) FROM freports_staff_ratings "
+                        + "GROUP BY staff_uuid ORDER BY AVG(score) DESC, COUNT(*) DESC", new ArrayList<>(),
+                rs -> new StaffRating(uuid(rs.getString(1)), rs.getString(2), rs.getDouble(3), rs.getInt(4)));
+    }
+
+    @Override
+    public CompletableFuture<Boolean> rateStaff(UUID staffUuid, String staffName, UUID raterUuid, String raterName, int score) {
+        long now = System.currentTimeMillis();
+        // cada avaliação fica guardada; só insere se não houve outra deste jogador a este staff nas últimas 24 h
+        return update("INSERT INTO freports_staff_ratings (staff_uuid, staff_name, rater_uuid, rater_name, score, "
+                        + "created_at, updated_at) SELECT ?, ?, ?, ?, ?, ?, ? FROM DUAL WHERE NOT EXISTS "
+                        + "(SELECT 1 FROM freports_staff_ratings WHERE staff_uuid = ? AND rater_uuid = ? AND created_at > ?)",
+                staffUuid.toString(), staffName, raterUuid.toString(), raterName, score, now, now,
+                staffUuid.toString(), raterUuid.toString(), now - RATE_COOLDOWN_MS).thenApply(n -> n > 0);
     }
 
     @Override

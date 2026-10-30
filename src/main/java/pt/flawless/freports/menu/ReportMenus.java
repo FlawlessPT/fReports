@@ -4,6 +4,7 @@ import pt.flawless.freports.config.ReportsConfig;
 import pt.flawless.freports.data.ReportsService;
 import pt.flawless.freports.listener.ReportFlow;
 import pt.flawless.freports.model.Report;
+import pt.flawless.freports.model.StaffRating;
 import pt.flawless.freports.util.Texts;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -39,9 +40,11 @@ public class ReportMenus implements Listener {
     private static final int PER_PAGE = 28;
     private static final int PREV_SLOT = 48, BACK_SLOT = 49, NEXT_SLOT = 50;
     // menus de 27: botões na linha do meio
-    private static final int LEFT = 11, MIDDLE = 13, RIGHT = 15, INFO = 22;
+    private static final int LEFT = 11, RIGHT = 15, INFO = 22;
+    // hub de staff: quatro botões
+    private static final int HUB_ANALYZE = 10, HUB_BUGS = 12, HUB_MINE = 14, HUB_RATINGS = 16;
 
-    private enum Kind { MEMBER, HUB, PICKER, MINE }
+    private enum Kind { MEMBER, HUB, PICKER, MINE, RATINGS }
 
     private static final class Holder implements InventoryHolder {
         final Kind kind;
@@ -78,9 +81,10 @@ public class ReportMenus implements Listener {
         Holder h = new Holder(staff ? Kind.HUB : Kind.MEMBER, 0, List.of());
         Inventory inv = create(h, FInventorySize.SIZE_27, config.msg(staff ? "menu-hub-title" : "menu-member-title"));
         if (staff) {
-            inv.setItem(LEFT, item(Material.WRITABLE_BOOK, config.msg("menu-analyze"), config.msg("menu-analyze-lore")));
-            inv.setItem(MIDDLE, item(Material.BEETROOT_SEEDS, config.msg("menu-bugs"), config.msg("menu-bugs-lore")));
-            inv.setItem(RIGHT, item(Material.BOOK, config.msg("menu-mine"), config.msg("menu-mine-lore")));
+            inv.setItem(HUB_ANALYZE, item(Material.WRITABLE_BOOK, config.msg("menu-analyze"), config.msg("menu-analyze-lore")));
+            inv.setItem(HUB_BUGS, item(Material.BEETROOT_SEEDS, config.msg("menu-bugs"), config.msg("menu-bugs-lore")));
+            inv.setItem(HUB_MINE, item(Material.BOOK, config.msg("menu-mine"), config.msg("menu-mine-lore")));
+            inv.setItem(HUB_RATINGS, item(Material.NETHER_STAR, config.msg("menu-ratings"), config.msg("menu-ratings-lore")));
         } else {
             inv.setItem(LEFT, item(Material.PLAYER_HEAD, config.msg("menu-report-player"), config.msg("menu-report-player-lore")));
             inv.setItem(RIGHT, item(Material.BOOK, config.msg("menu-mine"), config.msg("menu-mine-lore")));
@@ -126,6 +130,29 @@ public class ReportMenus implements Listener {
         }));
     }
 
+    private void openRatings(Player p, int page) {
+        service.listStaffRatings().whenComplete((list, e) -> runSync(() -> {
+            if (e != null) {
+                plugin.getLogger().log(Level.WARNING, "falha ao listar as avaliações", e);
+                p.sendMessage(config.msg("error"));
+                return;
+            }
+            if (!p.isOnline()) return;
+            int pg = clampPage(page, list.size());
+            Holder h = new Holder(Kind.RATINGS, pg, List.of());
+            Inventory inv = create(h, FInventorySize.SIZE_54, config.msg("menu-ratings-title"));
+            frame(inv, pg, list.size());
+            int from = pg * PER_PAGE;
+            for (int i = 0; from + i < list.size() && i < PER_PAGE; i++) {
+                StaffRating r = list.get(from + i);
+                inv.setItem(slotOf(i), head(r.staffUuid(), "§e" + r.staffName(), List.of(
+                        config.msg("menu-ratings-avg").replace("{media}", String.format(Locale.ROOT, "%.1f", r.average())),
+                        config.msg("menu-ratings-votes").replace("{n}", String.valueOf(r.votes())))));
+            }
+            p.openInventory(inv);
+        }));
+    }
+
     private ItemStack reportItem(Report r) {
         List<String> lore = new ArrayList<>();
         lore.add(config.msg("menu-mine-category").replace("{categoria}", config.msg("category-" + r.category().name())));
@@ -151,15 +178,16 @@ public class ReportMenus implements Listener {
                 else if (slot == RIGHT) openMine(p, 0);
             }
             case HUB -> {
-                if (slot == LEFT) StaffMenus.openReports(p);
-                else if (slot == MIDDLE) StaffMenus.openBugs(p);
-                else if (slot == RIGHT) openMine(p, 0);
+                if (slot == HUB_ANALYZE) StaffMenus.openReports(p);
+                else if (slot == HUB_BUGS) StaffMenus.openBugs(p);
+                else if (slot == HUB_MINE) openMine(p, 0);
+                else if (slot == HUB_RATINGS) openRatings(p, 0);
             }
-            case PICKER, MINE -> {
+            case PICKER, MINE, RATINGS -> {
                 boolean picker = h.kind == Kind.PICKER;
                 if (slot == BACK_SLOT) open(p);
-                else if (slot == PREV_SLOT && h.page > 0) page(p, picker, h.page - 1);
-                else if (slot == NEXT_SLOT && h.inventory.getItem(NEXT_SLOT) != null && h.inventory.getItem(NEXT_SLOT).getType() == org.bukkit.Material.ARROW) page(p, picker, h.page + 1);
+                else if (slot == PREV_SLOT && h.page > 0) page(p, h.kind, h.page - 1);
+                else if (slot == NEXT_SLOT && h.inventory.getItem(NEXT_SLOT) != null && h.inventory.getItem(NEXT_SLOT).getType() == org.bukkit.Material.ARROW) page(p, h.kind, h.page + 1);
                 else if (picker) {
                     int i = indexOf(slot);
                     if (i >= 0 && i < h.players.size()) {
@@ -172,9 +200,12 @@ public class ReportMenus implements Listener {
         }
     }
 
-    private void page(Player p, boolean picker, int page) {
-        if (picker) openPicker(p, page);
-        else openMine(p, page);
+    private void page(Player p, Kind kind, int page) {
+        switch (kind) {
+            case PICKER -> openPicker(p, page);
+            case RATINGS -> openRatings(p, page);
+            default -> openMine(p, page);
+        }
     }
 
     @EventHandler

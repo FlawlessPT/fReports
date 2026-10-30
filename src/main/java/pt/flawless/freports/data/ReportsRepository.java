@@ -7,6 +7,7 @@ import pt.flawless.freports.model.HistoryEntry;
 import pt.flawless.freports.model.Report;
 import pt.flawless.freports.model.ReportNote;
 import pt.flawless.freports.model.ReportStatus;
+import pt.flawless.freports.model.StaffRating;
 import pt.flawless.freports.model.Verdict;
 import java.util.Collection;
 import java.util.List;
@@ -57,6 +58,12 @@ public interface ReportsRepository {
     CompletableFuture<List<HistoryEntry>> history(UUID reporterUuid);
 
     CompletableFuture<Void> markNotified(long id);
+
+    /** Média e votos por staff, melhor média primeiro. */
+    CompletableFuture<List<StaffRating>> listStaffRatings();
+
+    /** Nota 1-10 de um jogador a um staff; cada nota fica guardada; nas 24 h seguintes à anterior devolve {@code false}. */
+    CompletableFuture<Boolean> rateStaff(UUID staffUuid, String staffName, UUID raterUuid, String raterName, int score);
 
     /** Reports RESOLVED/REJECTED do jogador ainda não notificados. */
     CompletableFuture<List<Report>> listUnnotifiedFinished(UUID reporterUuid);

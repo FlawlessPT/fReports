@@ -1,6 +1,7 @@
 package pt.flawless.freports;
 
 import pt.flawless.freports.command.BugReportCommand;
+import pt.flawless.freports.command.RateStaffCommand;
 import pt.flawless.freports.command.ReportCommand;
 import pt.flawless.freports.command.ReportsCommand;
 import pt.flawless.freports.config.ReportsConfig;
@@ -8,6 +9,7 @@ import pt.flawless.freports.data.ReportsService;
 import pt.flawless.freports.data.SqlReportsRepository;
 import pt.flawless.freports.listener.ReportAlerts;
 import pt.flawless.freports.listener.ReportFlow;
+import pt.flawless.freports.menu.RatingMenu;
 import pt.flawless.freports.menu.ReportMenus;
 import pt.flawless.freports.menu.StaffMenus;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -30,7 +32,8 @@ public class FReports extends JavaPlugin {
         try {
             saveDefaultConfig();
             DatabaseService database = Databases.get();
-            database.migrate(this, List.of("db/freports/V001__create_reports.sql"));
+            database.migrate(this, List.of("db/freports/V001__create_reports.sql", "db/freports/V002__create_staff_ratings.sql",
+                    "db/freports/V003__staff_ratings_history.sql"));
             service = new ReportsService(new SqlReportsRepository(database));
             ReportsConfig config = ReportsConfig.from(getConfig());
             ReportFlow.install(this, config);
@@ -43,6 +46,11 @@ public class FReports extends JavaPlugin {
             getServer().getPluginManager().registerEvents(menus, this);
             getCommand("reports").setExecutor(new ReportsCommand(menus, config));
             getCommand("bugreport").setExecutor(new BugReportCommand(this, config));
+            RatingMenu rating = new RatingMenu(this, service, config);
+            getServer().getPluginManager().registerEvents(rating, this);
+            RateStaffCommand rate = new RateStaffCommand(rating, config);
+            getCommand("avaliarstaff").setExecutor(rate);
+            getCommand("avaliarstaff").setTabCompleter(rate);
         } catch (SQLException | RuntimeException e) {
             // inclui DatabaseUnavailableException
             consoleLogger.sendMessage("não foi possível iniciar os reports: " + e.getMessage(), EMessageTypeEnum.ERROR);

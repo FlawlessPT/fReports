@@ -15,6 +15,9 @@ commands:
   bugreport:
     description: Reporta um bug
     usage: /bugreport <descrição>
+  avaliarstaff:
+    description: Avalia um membro da staff com uma nota de 1 a 10
+    usage: /avaliarstaff <staff>
 permissions:
   freports.staff:
     description: Gerir reports
